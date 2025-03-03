@@ -20,7 +20,7 @@ The consumer and producer components are using the implementation of [this repo]
 ### Rabbit MQ
 
 ### Consumer / Producer
-
+To use the provided images (see linked repo above), we need to push them to a **Container Registry** in order for Kubernetes to use them. Once the images are available in the registry, we can start creating the Kubernetes configuration files (`.yaml`).
 
 ## Helm
 Helm will simplify the configuration of our cluster (also at scale). Changes in the configuration file can propagate into the cluster without the need to change individual configuration files (`.yaml`). 
