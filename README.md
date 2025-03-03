@@ -18,9 +18,30 @@ I will follow the following steps to realize this project:
 The consumer and producer components are using the implementation of [this repo](https://github.com/avielb/rmqp-example/tree/master), since the focus of this project is in setting up the environment and less in implementing the application itself. Nonetheless, to understand application and its behavior / limits, I will look into Rabbit MQ in detail.
 
 ### Rabbit MQ
+The queue will be run (for starters) as a node in the cluster. To do that, we will need the following configurations:
+
+- deployment
+- service
+- persistent volume (local deployment with Minikube)
+- persistent volume claim
+
+The persistent volume will ensure that data sent to the queue will not be lost in case the node goes down.
+
 
 ### Consumer / Producer
 To use the provided images (see linked repo above), we need to push them to a **Container Registry** in order for Kubernetes to use them. Once the images are available in the registry, we can start creating the Kubernetes configuration files (`.yaml`).
+
+
+### :bulb: Learnings
+
+| :o: Issue | :mag_right: Source | :white_check_mark: Solution |
+| :---- | :----- | :------- |
+| Name or service not known | Producer trying to connect to Rabbit MQ via (cluster) service name that did not coincide | Corrected the service name re-applied config |
+| `pika.exceptions.ProbableAuthenticationError` | Credentials passed through in the cluster base64 encoded while the producer file (`.py`) tried to connect with clear values | Replaced hard-coded credentials in producer to pull from environment and decode the base64 encoding |
+| Incorrect padding | Base64 encoded secrets need to be padded by `=` to have length multiple of 4 | Needed to replace the secret config file |
+| Incorrect padding (persisted) | Decoding in producer pod raised an error | Kubernetes automatically decodes secrets when passed down as environment variables to a pod |
+
+
 
 ## Helm
 Helm will simplify the configuration of our cluster (also at scale). Changes in the configuration file can propagate into the cluster without the need to change individual configuration files (`.yaml`). 
