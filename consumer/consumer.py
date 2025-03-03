@@ -1,4 +1,4 @@
-import pika, logging, sys, argparse, time
+import pika, logging, sys, argparse, os
 from argparse import RawTextHelpFormatter
 from time import sleep
 
@@ -30,7 +30,10 @@ if __name__ == '__main__':
     sleep(5)
     logging.basicConfig(level=logging.INFO)
     LOG = logging.getLogger(__name__)
-    credentials = pika.PlainCredentials('guest', 'guest')
+    username = os.getenv("RABBITMQ_USER")
+    password = os.getenv("RABBITMQ_PASS")
+    
+    credentials = pika.PlainCredentials(username, password)
     parameters = pika.ConnectionParameters(args.server,
                                            int(args.port),
                                            '/',
