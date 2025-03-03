@@ -1,6 +1,8 @@
 import pika, logging, sys, argparse
 from argparse import RawTextHelpFormatter
 from time import sleep
+import os
+from datetime import datetime
 
 if __name__ == '__main__':
     examples = sys.argv[0] + " -p 5672 -s rabbitmq -m 'Hello' "
@@ -25,7 +27,12 @@ if __name__ == '__main__':
 
     logging.basicConfig(level=logging.INFO)
     LOG = logging.getLogger(__name__)
-    credentials = pika.PlainCredentials('guest', 'guest')
+    # Retrieve Base64-encoded username and password from environment variables
+    username = os.getenv('RABBITMQ_USER')
+    password = os.getenv('RABBITMQ_PASS')
+    print username, password
+    # Create RabbitMQ connection with decoded credentials
+    credentials = pika.PlainCredentials(username, password)
     parameters = pika.ConnectionParameters(args.server,
                                            int(args.port),
                                            '/',
@@ -40,9 +47,9 @@ if __name__ == '__main__':
 
     for i in range(0, int(args.repeat)):
         if channel.basic_publish('', q_name, args.message):
-            LOG.info('Message has been delivered')
+            LOG.info('{} : Message has been delivered'.format(datetime.now()))
         else:
-            LOG.warning('Message NOT delivered')
+            LOG.warning('{} : Message NOT delivered'.format(datetime.now()))
 
         sleep(2)
 
