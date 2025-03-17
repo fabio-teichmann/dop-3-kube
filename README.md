@@ -58,6 +58,14 @@ Once the configuration is created we create a release:
 helm install my-release ./kube-project
 ```
 
+### :bulb: Learnings
+
+| :o: Issue | :mag_right: Source | :white_check_mark: Solution |
+| :---- | :----- | :------- |
+| Cannot reference values from helm chart | config `.yaml` files were kept in separate folder | 2 ways to deal with this:<br>1. move configs to `/templates` folder<br>2. use a post-install helm hook<br>I will move configs for now |
+||||
+
+
 
 ## Jenkins
 
