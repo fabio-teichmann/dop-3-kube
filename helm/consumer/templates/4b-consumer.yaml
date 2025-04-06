@@ -2,7 +2,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: consumer 
-  namespace: {{ .Values.namespace | default "default" }}
+  namespace: {{ .Values.global.namespace | default "default" }}
 spec:
   replicas: {{ .Values.replicaCount }}
   selector:
@@ -18,9 +18,9 @@ spec:
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}" 
           env:
             - name: RABBITMQ_HOST 
-              value: "rabbitmq"
+              value: {{ .Values.global.rabbitmq.hostName }}
             - name: RABBITMQ_PORT
-              value: "5672"
+              value: "{{ .Values.global.rabbitmq.port }}"
             - name: RABBITMQ_USER
               valueFrom: 
                 secretKeyRef:

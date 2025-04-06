@@ -1,45 +1,45 @@
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
-  name: rabbitmq-pvc
-  namespace: {{ include "kube-proj.name" . }}
+  name: {{ .Values.persistentVolumeClaim.name }}
+  namespace: {{ .Values.global.namespace}}
 spec:
   accessModes:
     - ReadWriteOnce
   resources:
     requests:
-      storage: "512Mi"
+      storage: {{ .Values.persistentVolumeClaim.storage }}
 
 ---
 
 apiVersion: apps/v1
 kind: Deployment 
 metadata:
-  name: {{ .Values.application.rabbitmq.svcName }}
-  namespace:  {{ include "kube-proj.name" . }}
+  name: {{ .Values.global.rabbitmq.hostName }}
+  namespace:  {{ .Values.global.namespace}}
 spec:
-  replicas: {{ .Values.application.rabbitmq.replicaCount }}
+  replicas: {{ .Values.replicaCount }}
   selector:
     matchLabels:
-      app: {{ .Values.application.rabbitmq.svcName }}
+      app: {{ .Values.global.rabbitmq.hostName }}
   template: 
     metadata:
       labels:
-        app: {{ .Values.application.rabbitmq.svcName }}
+        app: {{ .Values.global.rabbitmq.hostName }}
     spec:
       containers:
-        - name: {{ .Values.application.rabbitmq.svcName }} 
+        - name: {{ .Values.global.rabbitmq.hostName }} 
           image: rabbitmq:3-management
           ports:
-            - containerPort: {{ .Values.application.rabbitmq.ampqPort }}
-            - containerPort: {{ .Values.application.rabbitmq.mgtPort }}
+            - containerPort: {{ .Values.global.rabbitmq.port }}
+            - containerPort: {{ .Values.application.mgtPort }}
           resources:
             limits:
               memory: "512Mi"
               cpu: "500m"
           {{- with .Values.application.env }}
           env:
-            {{- toYaml .Values.application.env | nindent 12}}
+            {{- toYaml . | nindent 12}}
           {{- end}}
           volumeMounts:
             - name: rabbitmq-data
@@ -47,26 +47,26 @@ spec:
       volumes:
         - name: rabbitmq-data
           persistentVolumeClaim:
-            claimName: rabbitmq-pvc
+            claimName: {{ .Values.persistentVolumeClaim.name }}
 
 --- 
 
 apiVersion: v1
 kind: Service
 metadata:
-  name: {{ .Values.application.rabbitmq.svcName }}
-  namespace: {{ include "kube-proj.name" . }}
+  name: {{ .Values.global.rabbitmq.hostName }}
+  namespace: {{ .Values.global.namespace }}
   labels: 
     {{- include "kube-project.labels" . | nindent 4 }}
 spec:
-  type: ClusterIP 
+  type: {{ .Values.service.type }}
   selector:
-    app: {{ .Values.application.rabbitmq.svcName }}
+    app: {{ .Values.global.rabbitmq.hostName }}
   ports:
     - name: amqp
       protocol: TCP
-      port: {{ .Values.application.rabbitmq.amqpPort }}
+      port: {{ .Values.global.rabbitmq.port }}
     - name: management
       protocol: TCP
-      port: {{ .Values.application.rabbitmq.mgtPort }}
+      port: {{ .Values.application.mgtPort }}
 
