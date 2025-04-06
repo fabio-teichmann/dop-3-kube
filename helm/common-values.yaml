@@ -1,0 +1,6 @@
+# configuration used by all or several helm-charts
+global:
+  namespace: kube-project-1
+  rabbitmq:
+    hostName: rabbitmq
+    port: 5672
