@@ -11,9 +11,15 @@ pipeline {
   }
 
   stages {
-    stage('Checkout') {
+    stage("Checkout") {
       steps {
-        checkout scm
+        checkout([$class: 'GitSCM',
+          branches: [[name: '*/main']],
+          userRemoteConfigs: [[
+            url: 'git@github.com:fabio-teichmann/dop-3-kube.git',
+            credentialsId: 'github-ssh'
+          ]]
+        ])
         script {
             env.IMAGE_TAG = sh(script: "git rev-parse --short HEAD", returnStdout: true).trim()
         }
