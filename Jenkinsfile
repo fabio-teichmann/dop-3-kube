@@ -37,14 +37,15 @@ pipeline {
 
     stage("Build and Push Image") {
         steps {
-            def components = env.COMPONENTS.split(",")
+            script {
+              def components = env.COMPONENTS.split(",")
 
-            withCredentials([usernamePassword(
-                credentialsId: 'dockerhub-creds',
-                usernameVariable: 'DOCKER_USER',
-                passwordVariable: 'DOCKER_PASS'
-                )]){
-                  script {
+              withCredentials([usernamePassword(
+                  credentialsId: 'dockerhub-creds',
+                  usernameVariable: 'DOCKER_USER',
+                  passwordVariable: 'DOCKER_PASS'
+                  )]){
+                  
                     components.each { ->
                     def image = "${DOCKER_USER}/${comp}:${IMAGE_TAG}"
 
