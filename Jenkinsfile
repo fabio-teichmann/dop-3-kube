@@ -44,7 +44,8 @@ pipeline {
                 usernameVariable: 'DOCKER_USER',
                 passwordVariable: 'DOCKER_PASS'
                 )]){
-                components.each { ->
+                  script {
+                    components.each { ->
                     def image = "${DOCKER_USER}/${comp}:${IMAGE_TAG}"
 
                     // build & push
@@ -52,7 +53,8 @@ pipeline {
                         docker build -t ${image} src/${comp}/
                         docker push ${image}
                     """
-                }
+                  }
+                } 
             }
         }
     }
