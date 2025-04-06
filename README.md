@@ -44,18 +44,18 @@ To use the provided images (see linked repo above), we need to push them to a **
 
 
 ## Helm
-Helm will simplify the configuration of our cluster (also at scale). Changes in the configuration file can propagate into the cluster without the need to change individual configuration files (`.yaml`). 
+Helm will simplify the configuration of our cluster (also at scale). Changes in the configuration file can propagate into the cluster without the need to change individual configuration files (`.yaml`). For this project we will keep the 3 components (RabbitMQ, Consumer, Producer) in 3 separate charts for cleaner and more extendible `values.yaml` files.
 
-To use Helm in our cluster we need to install it and create a Helm chart as a base:
+To use Helm in our cluster we need to install it and create a Helm chart for each component as a base:
 
 ```
 # create Helm chart
-helm create kube-project
+helm create {component_name}
 ```
 
 Once the configuration is created we create a release:
 ```
-helm install my-release ./kube-project
+helm upgrade --install {component_name} ./helm/{component_name}
 ```
 
 ### :bulb: Learnings
@@ -63,7 +63,8 @@ helm install my-release ./kube-project
 | :o: Issue | :mag_right: Source | :white_check_mark: Solution |
 | :---- | :----- | :------- |
 | Cannot reference values from helm chart | config `.yaml` files were kept in separate folder | 2 ways to deal with this:<br>1. move configs to `/templates` folder<br>2. use a post-install helm hook<br>I will move configs for now |
-||||
+| Shared configurations not dynamic enough (need to maintain in too many places) | Several helm-charts need common config values | Store shared values in `common-values.yaml` and feed into `helm upgrade --install ...` command. |
+| Go marshal error when installing helm-chart | Field in environment variables not type string | Write specific instructions to Helm: `"{{ ... }}"` to indicate string |
 
 
 
