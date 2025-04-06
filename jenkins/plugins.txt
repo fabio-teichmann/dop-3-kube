@@ -1,0 +1,5 @@
+kubernetes-cli
+git
+workflow-aggregator
+blueocean
+credentials
