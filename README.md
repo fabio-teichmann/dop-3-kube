@@ -11,8 +11,7 @@ I will follow the following steps to realize this project:
 3. set up Jenkins and connect to Kubernetes (allows deployments)
 4. set up container registry
 5. configure Jenkins pipeline(s)
-6. set up webhooks for automated builds
-7. monitor and optimize (optional)
+6. monitor and optimize (optional)
 
 ## Setting up the cluster
 The consumer and producer components are using the implementation of [this repo](https://github.com/avielb/rmqp-example/tree/master), since the focus of this project is in setting up the environment and less in implementing the application itself. Nonetheless, to understand application and its behavior / limits, I will look into Rabbit MQ in detail.
@@ -73,116 +72,30 @@ helm upgrade --install {component_name} ./helm/{component_name}
 Jenkins is the CI/CD orchestrator, and we need it before automating builds and deployments.
 It will need access to the Kubernetes cluster and the container registry.
 
+> [!NOTE]
+> For this project, Jenkins is run outside the Kubernetes cluster in a Docker container.
+
+
+
 ### Setup
 
-Deploy Jenkins inside Kubernetes:
-```sh
-helm repo add jenkins https://charts.jenkins.io
-helm repo update
-helm install jenkins jenkins/jenkins --set controller.serviceType=LoadBalancer
+Build and run Jenkins:
+```bash
+docker build -t <registry_username>/jenkins_dop_3:latest ./jenkins/
+docker run -d <registry_username>/jenkins_dop_3:latest
 ```
-Retrieve the admin password:
-```sh
-kubectl exec --namespace default -it svc/jenkins -c jenkins -- cat /run/secrets/chart-admin-password
-```
-Access Jenkins via web browser and complete setup.
 
+The CI pipeline needs a place to store built Docker images before deploying them. Once, Jenkins is running (locally), we need to ensure Jenkins has access (e.g., through SSH keys or access tokens) to GitHub and the image repository (I used DockerHub) for the automated builds. To do this, we need to access Jenkins via web browser and complete the setup: set up  credentials under "Manage Credentials".
 
-### Connect to Kubernetes
-Jenkins needs to communicate with Kubernetes to deploy applications.
-This step ensures Jenkins has proper permissions.
+When that is in place, the pieces can come together.
 
-Create a Service Account for Jenkins in Kubernetes:
-```sh
-kubectl create serviceaccount jenkins
-kubectl create clusterrolebinding jenkins-binding --clusterrole=cluster-admin --serviceaccount=default:jenkins
-```
-Retrieve the Token to Add to Jenkins Credentials:
-```sh
-kubectl get secret $(kubectl get sa jenkins -o jsonpath="{.secrets[0].name}") -o jsonpath="{.data.token}" | base64 --decode
-```
-Add the Token to Jenkins under Manage Jenkins → Manage Credentials → Kubernetes Cluster Credentials.
+### :bulb: Learnings
 
-## Container Registry
-The CI pipeline needs a place to store built Docker images before deploying them.
-Kubernetes will pull images from this registry.
+| :o: Issue | :mag_right: Source | :white_check_mark: Solution |
+| :---- | :----- | :------- |
+| Jenkins unable to connect to GitHub although tokens in place | Jenkins container did not have access to the SSH files (stored locally) | Manually copied SSH files over to container;<br>Adjusted Dockerfile to copy over file automatically for subsequent runs | 
+| Jenkins job unable to run `kubectl` scripts | Missing files in Jenkins container for local Minikube setup | 2 ways to deal with it:<br>1. Use a cloud Kubernetes `kubeconfig` (safer way BUT this project is not using cloud resources);<br>2. make Minikube files available to Jenkins and adjust `kubeconfig` accordingly |
+| Jenkins unable to access local Minikube cluster to set up namespace | Unknown | Stopped investigating this issue (see below) |
 
-I will use Docker Hub for this project.
-
-Add credentials to Jenkins under Manage Credentials.
-
-
-## Configure Jenkins Pipelines
-The infrastructure is ready, so we can now define the automation logic.
-The pipeline will pull code, build the app, push an image, and deploy it using Helm.
-
-Steps:
-
-Create a Jenkinsfile in your Git repository:
-groovy
-Copy
-Edit
-pipeline {
-    agent any
-    environment {
-        IMAGE_NAME = "my-app"
-        IMAGE_TAG = "v${env.BUILD_NUMBER}"
-        REGISTRY = "registry.example.com"
-    }
-    stages {
-        stage('Checkout Code') {
-            steps {
-                git 'https://github.com/user/repo.git'
-            }
-        }
-        stage('Build & Test') {
-            steps {
-                sh 'mvn clean test'
-            }
-        }
-        stage('Build Docker Image') {
-            steps {
-                sh "docker build -t $REGISTRY/$IMAGE_NAME:$IMAGE_TAG ."
-            }
-        }
-        stage('Push Image to Registry') {
-            steps {
-                sh "docker push $REGISTRY/$IMAGE_NAME:$IMAGE_TAG"
-            }
-        }
-        stage('Deploy with Helm') {
-            steps {
-                sh """
-                helm upgrade --install my-release ./helm-chart \
-                    --set image.tag=$IMAGE_TAG \
-                    --set image.repository=$REGISTRY/$IMAGE_NAME
-                """
-            }
-        }
-    }
-}
-Commit and push it to Git.
-
-## Set Up Webhooks for Automatic Builds
-This ensures Jenkins pipelines trigger automatically on new Git commits.
-
-Steps:
-
-In GitHub/GitLab, go to repository settings → Webhooks.
-Set the webhook URL to Jenkins:
-perl
-Copy
-Edit
-http://<jenkins-url>/github-webhook/
-Enable Push events.
-
-
-## Monitor and Optimize (Optional)
-Once everything works, monitoring helps detect issues and improve performance.
-
-Steps:
-
-Set up logging in Kubernetes:
-```sh
-kubectl logs -f <pod-name>
-```
+> [!IMPORTANT]
+> I strategically stopped developing this project as the only missing component was for Jenkins to successfully connect to my local Minikube cluster. I had experienced similar issue for different setups, so this might be as well linked to some local variable. The overall link between Jenkins, Helm and Kubernetes is completed.
