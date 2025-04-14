@@ -36,15 +36,6 @@ pipeline {
               """
             }
         }
-
-        // withCredentials([file(credentialsId: "${env.KUBECONFIG_CREDENTIALS_ID}", variable: 'KUBECONFIG')]) {
-        //   script {
-        //     sh """
-        //       # Create namespace if it doesn't exist (idempotent)
-        //       kubectl get namespace $NAMESPACE || kubectl create namespace $NAMESPACE
-        //     """
-        //   }
-        // }
       }
     }
 
